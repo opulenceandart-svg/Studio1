@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>StudioX</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080808;--s1:#111;--s2:#161616;--s3:#1e1e1e;--b1:#1e1e1e;--b2:#272727;--b3:#333;--txt:#f0f0f0;--mut:#555;--dim:#222;--gold:#d4a843;--blue:#3d7eff;--cyan:#00c8d4;--green:#1db954;--red:#e03c3c}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+input,select,textarea,button{font-family:inherit;box-sizing:border-box}
+select option{background:#111;color:#f0f0f0}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--b3);border-radius:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes progfill{0%{width:2%}50%{width:70%}90%{width:92%}100%{width:95%}}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+@keyframes slideup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* LOCK */
+#lock{position:fixed;inset:0;background:#050505;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.lk-logo{font-size:72px;font-weight:900;letter-spacing:-4px;line-height:1;margin-bottom:4px;text-align:center}
+.lk-logo b{color:var(--gold)}
+.lk-sub{font-size:11px;letter-spacing:5px;color:var(--mut);text-transform:uppercase;margin-bottom:44px}
+.lk-wrap{width:100%;max-width:300px}
+#lk-inp{display:block;width:100%;background:#111;border:1px solid #2a2a2a;border-radius:14px;color:#fff;font-size:22px;padding:16px;outline:none;text-align:center;letter-spacing:8px;margin-bottom:12px}
+#lk-inp:focus{border-color:var(--gold)}
+#lk-inp::placeholder{letter-spacing:2px;font-size:14px;color:#2a2a2a}
+#lk-btn{display:block;width:100%;padding:16px;background:var(--gold);border:none;border-radius:14px;font-size:17px;font-weight:800;color:#000;cursor:pointer;letter-spacing:1px}
+#lk-btn:active{filter:brightness(.9)}
+#lk-err{text-align:center;color:var(--red);font-size:13px;margin-top:10px;min-height:20px}
+
+/* APP */
+#app{display:none;flex-direction:column;height:100vh;overflow:hidden}
+#app.on{display:flex}
+
+/* TOPBAR */
+#topbar{height:52px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;background:var(--bg)}
+.logo{font-size:22px;font-weight:900;letter-spacing:-1px}
+.logo b{color:var(--gold)}
+.modesw{display:flex;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:3px;gap:2px}
+.msbtn{padding:5px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--mut);transition:all .15s}
+.msbtn.on{background:var(--s3);color:var(--txt)}
+.topbtns{display:flex;gap:6px}
+.topbtn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--b1);background:transparent;color:var(--mut);cursor:pointer}
+
+/* SCREENS */
+.screen{flex:1;overflow:hidden;display:none}
+.screen.on{display:flex}
+
+/* ── SIMPLE MODE ── */
+#simple{flex-direction:column;align-items:center;overflow-y:auto;padding:32px 16px 80px}
+.simple-title{font-size:38px;font-weight:900;letter-spacing:-2px;text-align:center;margin-bottom:6px;line-height:1.1}
+.simple-title b{color:var(--gold)}
+.simple-sub{font-size:14px;color:var(--mut);text-align:center;margin-bottom:28px}
+
+/* HF BANNER */
+.hfbanner{width:100%;max-width:680px;background:rgba(61,126,255,.07);border:1px solid rgba(61,126,255,.22);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.hfbanner.ok{background:rgba(29,185,84,.06);border-color:rgba(29,185,84,.25)}
+.hfbanner-title{font-size:14px;font-weight:700;color:var(--blue)}
+.hfbanner.ok .hfbanner-title{color:var(--green)}
+.hfbanner-sub{font-size:11px;color:var(--mut);margin-top:2px}
+.hfbanner-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hfbanner-inp{flex:1;min-width:160px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;color:#fff;font-size:13px;padding:9px 13px;outline:none;font-family:monospace}
+.hfbanner-inp:focus{border-color:var(--blue)}
+.hfbanner-stat{font-size:12px;color:var(--mut);white-space:nowrap}
+.hflink{font-size:12px;color:var(--blue);white-space:nowrap;text-decoration:none}
+
+/* PROMPT BOX */
+.pbox{width:100%;max-width:680px;background:var(--s1);border:1px solid var(--b2);border-radius:18px;padding:6px 6px 6px 18px;display:flex;align-items:flex-end;gap:6px;margin-bottom:16px}
+.pbox:focus-within{border-color:var(--b3)}
+#simple-ta{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-size:16px;resize:none;min-height:28px;max-height:180px;line-height:1.6;padding:9px 0}
+#simple-ta::placeholder{color:var(--dim)}
+.genbtn{flex-shrink:0;padding:11px 20px;background:var(--gold);border:none;border-radius:12px;font-size:15px;font-weight:800;color:#000;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.genbtn:active{filter:brightness(.9)}
+.genbtn:disabled{opacity:.4;cursor:not-allowed}
+
+/* PILLS */
+.pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:680px;width:100%;margin-bottom:14px}
+.pill{padding:7px 14px;border-radius:20px;background:var(--s1);border:1px solid var(--b1);font-size:12px;color:var(--mut);cursor:pointer;display:flex;align-items:center;gap:5px}
+.pill.on{border-color:var(--gold);color:var(--gold);background:rgba(212,168,67,.07)}
+.pill select{background:transparent;border:none;color:inherit;font-size:12px;outline:none;cursor:pointer}
+
+/* IDEA CHIPS */
+.ideas{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:680px;width:100%;margin-bottom:36px}
+.idea{padding:7px 14px;border-radius:20px;background:transparent;border:1px solid var(--b1);font-size:12px;color:var(--mut);cursor:pointer}
+.idea:active{background:var(--s1)}
+
+/* CLIPS */
+.clips-hdr{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:1080px;margin-bottom:12px}
+.clips-hdr-t{font-size:14px;font-weight:700}
+.clips-hdr-c{font-size:12px;color:var(--mut)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;width:100%;max-width:1080px}
+.empty{grid-column:1/-1;text-align:center;padding:56px 20px;color:var(--mut)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty h3{font-size:17px;font-weight:700;margin-bottom:5px}
+.empty p{font-size:13px;color:var(--dim)}
+
+/* CARD */
+.vcard{background:var(--s1);border:1px solid var(--b1);border-radius:12px;overflow:hidden;animation:slideup .25s ease;transition:transform .15s,border-color .15s}
+.vcard.clickable{cursor:pointer}
+.vcard.clickable:hover{transform:translateY(-2px);border-color:var(--b2)}
+.vcard.ext{border-left:2px solid var(--gold)}
+.vthumb{position:relative;aspect-ratio:16/9;background:var(--s2);overflow:hidden}
+.vthumb canvas{width:100%;height:100%;display:block}
+.vthumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vbadge{position:absolute;top:7px;right:7px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px}
+.vbadge.gen{background:rgba(61,126,255,.15);color:var(--blue);border:1px solid rgba(61,126,255,.25)}
+.vbadge.done{background:rgba(29,185,84,.12);color:var(--green);border:1px solid rgba(29,185,84,.22)}
+.vbadge.err{background:rgba(224,60,60,.12);color:var(--red);border:1px solid rgba(224,60,60,.22)}
+.vprog{position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--b1)}
+.vprog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));animation:progfill 22s ease-in-out forwards}
+.vshim{position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.03) 50%,transparent 100%);animation:shimmer 2.2s infinite}
+.extbadge{position:absolute;top:7px;left:7px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;background:rgba(212,168,67,.12);color:var(--gold);border:1px solid rgba(212,168,67,.2)}
+.lipbadge{position:absolute;bottom:7px;right:7px;padding:2px 7px;border-radius:5px;font-size:9px;font-weight:700;background:rgba(0,200,212,.15);color:var(--cyan);border:1px solid rgba(0,200,212,.25)}
+.vinfo{padding:10px 12px}
+.vprompt{font-size:13px;line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vmeta{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.vtags{display:flex;gap:4px;flex-wrap:wrap}
+.vtag{font-size:10px;color:var(--mut);background:var(--s2);padding:2px 7px;border-radius:4px;border:1px solid var(--b1)}
+.vtag.tg{color:var(--gold);background:rgba(212,168,67,.07);border-color:rgba(212,168,67,.18)}
+.vtag.tc{color:var(--cyan);background:rgba(0,200,212,.06);border-color:rgba(0,200,212,.18)}
+.vacts{display:flex;gap:2px}
+.vact{width:28px;height:28px;border-radius:6px;background:none;border:1px solid transparent;cursor:pointer;color:var(--mut);font-size:14px;display:flex;align-items:center;justify-content:center}
+.vact:active{background:var(--s2)}
+.vact.gold{color:var(--gold)}
+.vfoot{padding:7px 12px;border-top:1px solid var(--b1);display:flex;gap:6px}
+.vfbtn{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid}
+.vfbtn.ext{background:rgba(212,168,67,.08);color:var(--gold);border-color:rgba(212,168,67,.22)}
+.vfbtn.ls{background:rgba(0,200,212,.06);color:var(--cyan);border-color:rgba(0,200,212,.2)}
+.vfbtn:active{filter:brightness(.85)}
+
+/* ── DIRECTOR MODE ── */
+#director{flex-direction:row}
+.dp-left{width:200px;min-width:200px;background:var(--s1);border-right:1px solid var(--b1);overflow-y:auto;display:flex;flex-direction:column}
+.dp-center{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.dp-right{width:250px;min-width:250px;background:var(--s1);border-left:1px solid var(--b1);overflow-y:auto}
+@media(max-width:700px){.dp-left,.dp-right{display:none}}
+.dpsec{padding:13px;border-bottom:1px solid var(--b1)}
+.dplbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:10px;display:block}
+.stybtn{padding:7px 9px;border-radius:7px;background:transparent;border:1px solid transparent;cursor:pointer;display:flex;align-items:center;gap:8px;width:100%;text-align:left;margin-bottom:2px;color:var(--txt);font-size:13px;font-weight:600}
+.stybtn.on{background:var(--s2);border-color:var(--b2)}
+.stydot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0;display:inline-block}
+.stybtn.on .stydot{background:var(--gold)}
+.apirow{margin-bottom:12px}
+.apilbl{font-size:10px;color:var(--mut);font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between}
+.apilbl a{color:var(--blue);font-size:10px;text-decoration:none}
+.apiinp{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--txt);font-size:11px;font-family:monospace;padding:8px 10px;outline:none}
+.apiinp:focus{border-color:var(--b2)}
+.apistat{font-size:10px;color:var(--mut);margin-top:4px;display:flex;align-items:center;gap:5px}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--dim);display:inline-block;flex-shrink:0}
+.sdot.ok{background:var(--green)}
+.dp-prompt{padding:14px;border-bottom:1px solid var(--b1);flex-shrink:0;background:var(--bg)}
+#dir-ta{width:100%;background:transparent;border:none;outline:none;color:var(--txt);font-size:14px;resize:none;line-height:1.6;margin-bottom:10px}
+#dir-ta::placeholder{color:var(--dim)}
+.dp-prompt-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.dpills{display:flex;gap:5px;flex-wrap:wrap}
+.dpill{padding:5px 12px;border-radius:7px;background:var(--s2);border:1px solid var(--b1);font-size:12px;color:var(--mut);cursor:pointer;font-weight:600}
+.dpill.on{border-color:var(--gold);color:var(--gold);background:rgba(212,168,67,.06)}
+.dirgenbtn{padding:9px 18px;background:var(--gold);border:none;border-radius:10px;font-size:14px;font-weight:800;color:#000;cursor:pointer;display:flex;align-items:center;gap:6px}
+.dirgenbtn:disabled{opacity:.4;cursor:not-allowed}
+.dp-clips{flex:1;overflow-y:auto;padding:14px}
+.vopt{padding:7px 8px;border-radius:7px;background:var(--s2);border:1px solid var(--b1);cursor:pointer;text-align:center;margin-bottom:5px}
+.vopt.on{border-color:var(--cyan)}
+.vopt-name{font-size:12px;font-weight:700}
+.vopt-style{font-size:10px;color:var(--mut);margin-top:1px}
+.vsel-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.vta{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--txt);font-size:13px;resize:none;padding:9px;outline:none;min-height:68px;line-height:1.5;margin-bottom:8px}
+.vta:focus{border-color:var(--cyan)}
+.vta::placeholder{color:var(--dim)}
+.synthbtn{width:100%;padding:9px;background:rgba(0,200,212,.1);border:1px solid rgba(0,200,212,.22);border-radius:8px;color:var(--cyan);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.synthbtn:disabled{opacity:.4;cursor:not-allowed}
+.fsel{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--txt);font-size:12px;padding:8px 9px;outline:none;cursor:pointer;-webkit-appearance:none;margin-bottom:8px}
+
+/* SPIN */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.15);border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite}
+
+/* MODAL BG */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;display:flex;align-items:center;justify-content:center;padding:16px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.mbox{background:var(--s1);border:1px solid var(--b2);border-radius:16px;max-width:580px;width:100%;max-height:92vh;overflow:hidden;display:flex;flex-direction:column}
+.mbox-sm{max-width:440px;padding:26px;position:relative;border-radius:16px}
+.mclose{position:absolute;top:13px;right:16px;background:none;border:none;color:var(--mut);font-size:22px;cursor:pointer;line-height:1;padding:4px}
+.mthumb{aspect-ratio:16/9;background:var(--s2);position:relative;overflow:hidden;flex-shrink:0}
+.mthumb canvas{width:100%;height:100%;display:block}
+.mthumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mbody{padding:16px 18px;overflow-y:auto}
+.mprompt{font-size:13px;color:var(--mut);line-height:1.55;margin-bottom:14px}
+.macts{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}
+.mbt{padding:8px 16px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--mut)}
+.mbt.gold{background:var(--gold);color:#000;border-color:transparent}
+.mbt.gold:active{filter:brightness(.9)}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--s3);border:1px solid var(--b3);color:var(--txt);padding:9px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;display:flex;align-items:center;gap:7px;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,.6);max-width:90vw;white-space:normal;text-align:center}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+
+/* HELP BOX */
+.helpbox{background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:13px;margin-bottom:9px}
+.helpbox-title{font-size:13px;font-weight:700;margin-bottom:4px}
+.helpbox-desc{font-size:12px;color:var(--mut);line-height:1.55}
+</style>
+</head>
+<body>
+
+<!-- LOCK -->
+<div id="lock">
+  <div class="lk-logo">Studio<b>X</b></div>
+  <div class="lk-sub">AI Production Software</div>
+  <div class="lk-wrap">
+    <input type="password" id="lk-inp" placeholder="Enter access code" autocomplete="off"/>
+    <button id="lk-btn">Access StudioX</button>
+    <div id="lk-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="logo">Studio<b>X</b></div>
+    <div class="modesw">
+      <button class="msbtn on" id="msw-s">✦ Simple</button>
+      <button class="msbtn" id="msw-d">🎬 Director</button>
+    </div>
+    <div class="topbtns">
+      <button class="topbtn" id="export-btn">Export</button>
+      <button class="topbtn" id="lock-btn">Lock</button>
+    </div>
+  </div>
+
+  <!-- SIMPLE -->
+  <div class="screen on" id="simple">
+    <div class="simple-title">What do you want to <b>create?</b></div>
+    <div class="simple-sub">Describe your scene — StudioX brings it to life</div>
+
+    <div class="hfbanner" id="hf-banner">
+      <div>
+        <div class="hfbanner-title" id="hf-banner-title">🤗 Connect HuggingFace to generate real AI videos</div>
+        <div class="hfbanner-sub">Free at huggingface.co → Settings → Access Tokens → Read only → paste below</div>
+      </div>
+      <div class="hfbanner-row">
+        <input type="password" class="hfbanner-inp" id="hf-inp" placeholder="hf_xxxxxxxxxxxx"/>
+        <span class="hfbanner-stat" id="hf-stat-s">Not connected</span>
+        <a class="hflink" href="https://huggingface.co/settings/tokens" target="_blank">Get token →</a>
+      </div>
+    </div>
+
+    <div class="pbox">
+      <textarea id="simple-ta" rows="1" placeholder="A hero walks toward the camera in slow motion as the building explodes behind them..."></textarea>
+      <button class="genbtn" id="simple-gen">Generate ✦</button>
+    </div>
+
+    <div class="pills">
+      <div class="pill on" id="style-pill">🎨 <span id="style-lbl">80s Action</span></div>
+      <div class="pill"><span>⏱</span><select id="q-dur"><option>10s</option><option>15s</option><option selected>30s</option><option>45s</option><option>60s</option></select></div>
+      <div class="pill"><span>📐</span><select id="q-ratio"><option selected>16:9</option><option>9:16</option><option>1:1</option></select></div>
+      <div class="pill"><span>✨</span><select id="q-qual"><option>720p</option><option selected>1080p</option><option>4K</option></select></div>
+    </div>
+
+    <div class="ideas">
+      <button class="idea" data-p="80s action hero leaps from rooftop as building explodes, VHS grain, slow motion, neon glow">💥 Explosion escape</button>
+      <button class="idea" data-p="Cyberpunk motorcycle chase through rain-soaked neon streets at midnight, cinematic wide shot">🏍️ Cyber chase</button>
+      <button class="idea" data-p="Anime warrior charging a massive energy blast, speed lines, dramatic close-up, vivid colors">⚡ Anime battle</button>
+      <button class="idea" data-p="Film noir detective lights cigarette in dark alley, venetian blind shadows, black and white">🎭 Noir moment</button>
+      <button class="idea" data-p="Epic drone shot over futuristic megacity at golden hour, clouds parting, orchestral">🌆 City drone</button>
+      <button class="idea" data-p="80s cartoon hero punches villain, flat bright colors, bold outlines, action words POW!">🎨 Retro toon</button>
+    </div>
+
+    <div class="clips-hdr">
+      <div class="clips-hdr-t">Your Clips</div>
+      <div class="clips-hdr-c" id="clip-count">0 clips</div>
+    </div>
+    <div class="cgrid" id="simple-grid"></div>
+  </div>
+
+  <!-- DIRECTOR -->
+  <div class="screen" id="director">
+    <!-- LEFT -->
+    <div class="dp-left">
+      <div class="dpsec">
+        <span class="dplbl">Style</span>
+        <div id="style-list"></div>
+      </div>
+      <div class="dpsec" style="flex:1">
+        <span class="dplbl">API Keys</span>
+        <div class="apirow">
+          <div class="apilbl">ElevenLabs <a href="https://elevenlabs.io" target="_blank">free →</a></div>
+          <input type="password" class="apiinp" id="el-key" placeholder="sk_xxxx..."/>
+          <div class="apistat"><span class="sdot" id="el-dot"></span><span id="el-stat">Paste for voice</span></div>
+        </div>
+        <div class="apirow">
+          <div class="apilbl">HuggingFace <a href="https://huggingface.co/settings/tokens" target="_blank">free →</a></div>
+          <input type="password" class="apiinp" id="hf-dir" placeholder="hf_xxxx..."/>
+          <div class="apistat"><span class="sdot" id="hf-dot"></span><span id="hf-stat-d">Paste for video</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- CENTER -->
+    <div class="dp-center">
+      <div class="dp-prompt">
+        <textarea id="dir-ta" rows="3" placeholder="Write your scene — characters, action, camera, mood, lighting..."></textarea>
+        <div class="dp-prompt-foot">
+          <div class="dpills">
+            <button class="dpill on" id="dp-style">80s Action</button>
+            <button class="dpill" id="dp-cam">Wide Shot</button>
+          </div>
+          <button class="dirgenbtn" id="dir-gen">🎬 Generate</button>
+        </div>
+      </div>
+      <div class="dp-clips"><div class="cgrid" id="dir-grid"></div></div>
+    </div>
+    <!-- RIGHT -->
+    <div class="dp-right">
+      <div class="dpsec">
+        <span class="dplbl">Voice Synthesis</span>
+        <div class="vsel-grid" id="voice-sel"></div>
+        <textarea class="vta" id="voice-ta" placeholder="Type dialogue...&#10;&#10;'I'll be back. This time I brought friends.'"></textarea>
+        <button class="synthbtn" id="synth-btn">⚡ Synthesize Voice</button>
+        <div id="voice-out" style="display:none;margin-top:8px">
+          <audio id="voice-audio" controls style="width:100%;accent-color:var(--cyan)"></audio>
+        </div>
+      </div>
+      <div class="dpsec">
+        <span class="dplbl">Clip Settings</span>
+        <select class="fsel" id="d-dur"><option>10s</option><option>15s</option><option selected>30s</option><option>45s</option><option>60s</option></select>
+        <select class="fsel" id="d-ratio"><option selected>16:9</option><option>9:16</option><option>1:1</option><option>2.39:1</option></select>
+        <select class="fsel" id="d-qual"><option>720p</option><option selected>1080p</option><option>4K</option></select>
+        <select class="fsel" id="d-model">
+          <option value="damo-vilab/text-to-video-ms-1.7b">Text-to-Video MS</option>
+          <option value="cerspense/zeroscope_v2_576w">ZeroScope v2</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="mbg" id="prev-bg" style="display:none">
+  <div class="mbox">
+    <div class="mthumb"><canvas id="prev-canvas" width="560" height="315"></canvas></div>
+    <div class="mbody">
+      <div class="mprompt" id="prev-prompt"></div>
+      <div class="macts">
+        <button class="mbt" id="prev-close">Close</button>
+        <button class="mbt" id="prev-dl" style="background:rgba(0,200,212,.1);color:var(--cyan);border-color:rgba(0,200,212,.25)">⬇ Download</button>
+        <button class="mbt gold" id="prev-extend">↪ Extend</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIP SYNC MODAL -->
+<div class="mbg" id="ls-bg" style="display:none">
+  <div class="mbox mbox-sm" style="background:var(--s1)">
+    <button class="mclose" id="ls-close">×</button>
+    <h2 style="font-size:19px;font-weight:800;margin-bottom:6px">💋 Lip Sync</h2>
+    <p style="font-size:13px;color:var(--mut);margin-bottom:16px;line-height:1.55">Type what your character should say. StudioX synthesizes voice and syncs it to the character.</p>
+    <textarea class="vta" id="ls-ta" style="width:100%" placeholder="'The city is mine now. Always has been.'"></textarea>
+    <select class="fsel" id="ls-voice">
+      <option value="21m00Tcm4TlvDq8ikWAM">Rachel — Neutral</option>
+      <option value="pNInz6obpgDQGcFmaJgB">Adam — Deep</option>
+      <option value="EXAVITQu4vr4xnSDxMaL">Bella — Warm</option>
+      <option value="ErXwobaYiN019PkySvjV">Antoni — Action</option>
+    </select>
+    <button class="synthbtn" id="ls-run" style="margin-top:4px">⚡ Generate Lip Sync</button>
+    <div id="ls-status" style="font-size:12px;color:var(--green);margin-top:10px;min-height:18px"></div>
+  </div>
+</div>
+
+<!-- NETWORK HELP MODAL -->
+<div class="mbg" id="net-bg" style="display:none">
+  <div class="mbox mbox-sm" style="background:var(--s1)">
+    <button class="mclose" id="net-close">×</button>
+    <div style="font-size:30px;margin-bottom:10px">🚫</div>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:8px">Connection blocked</h2>
+    <p style="font-size:13px;color:var(--mut);margin-bottom:16px;line-height:1.55">Your browser or network is blocking the API call to HuggingFace. Try these fixes:</p>
+    <div class="helpbox"><div class="helpbox-title">Disable ad blocker / VPN</div><div class="helpbox-desc">Extensions like uBlock Origin can block API calls. Disable them for this page and try again.</div></div>
+    <div class="helpbox"><div class="helpbox-title">Switch to mobile data</div><div class="helpbox-desc">Some WiFi networks block outbound API calls. Try turning off WiFi and using your phone's data instead.</div></div>
+    <div class="helpbox"><div class="helpbox-title">Try Chrome or Safari</div><div class="helpbox-desc">If you're on Firefox or Brave, try opening this in Chrome or Safari instead.</div></div>
+    <button class="mbt gold" id="net-close2" style="width:100%;margin-top:6px;padding:13px;font-size:15px;display:block;text-align:center">Got it</button>
+  </div>
+</div>
+
+<div id="toast"><span class="tdot"></span><span id="toast-msg"></span></div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━
+// CONFIG — change password here
+var CODE = 'studiox2025';
+// ━━━━━━━━━━━━━━━━━━━━━━━
+
+var STYLES = ['80s Action','Neo Anime','Cyberpunk','Cinematic','Film Noir','Retro Cartoon'];
+var CAMS   = ['Wide Shot','Close-Up','Drone Shot','Tracking Shot','POV Shot','Dutch Angle'];
+var SDESC  = {
+  '80s Action':'1980s VHS action film, grain overlay, neon glow, high contrast',
+  'Neo Anime':'Japanese anime cel shading, speed lines, vibrant saturated colors',
+  'Cyberpunk':'cyberpunk neon-noir, holographic UI, rain-soaked streets',
+  'Cinematic':'Hollywood cinematic, photorealistic, anamorphic lens flare, IMAX',
+  'Film Noir':'black and white film noir, deep shadows, venetian blind light',
+  'Retro Cartoon':'1980s Saturday morning cartoon, flat colors, bold outlines'
+};
+var PALS = [
+  ['#1a0505','#3a0808','#c84010','#ff8800'],
+  ['#050515','#0f0a30','#4010a0','#ff2080'],
+  ['#020810','#040e24','#083888','#00ccff'],
+  ['#080808','#141414','#282828','#d4a843'],
+  ['#020202','#0a0a0a','#181818','#aaaaaa'],
+  ['#0a0500','#201000','#603000','#ffc800']
+];
+var VOICES = [
+  {id:'21m00Tcm4TlvDq8ikWAM',name:'Rachel',style:'Neutral'},
+  {id:'pNInz6obpgDQGcFmaJgB',name:'Adam',style:'Deep'},
+  {id:'EXAVITQu4vr4xnSDxMaL',name:'Bella',style:'Warm'},
+  {id:'ErXwobaYiN019PkySvjV',name:'Antoni',style:'Action'}
+];
+
+var clips=[], si=0, ci=0, activeVoiceId=VOICES[0].id, lsClipId=null, prevClipId=null, prevAF=null;
+var generating=false;
+
+// ── HELPERS ──
+function $id(id){return document.getElementById(id);}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function rndPal(){return PALS[Math.floor(Math.random()*PALS.length)];}
+var _tt;
+function toast(msg){
+  var el=$id('toast');$id('toast-msg').textContent=msg;
+  el.classList.add('show');clearTimeout(_tt);
+  _tt=setTimeout(function(){el.classList.remove('show');},3200);
+}
+function getHF(){return $id('hf-inp').value.trim()||$id('hf-dir').value.trim()||localStorage.getItem('sx6_hf')||'';}
+function getEL(){return $id('el-key').value.trim()||localStorage.getItem('sx6_el')||'';}
+
+// ── CANVAS ──
+function drawCanvas(cv,pal,t){
+  if(!cv)return;t=t||0;
+  var ctx=cv.getContext('2d'),w=cv.width,h=cv.height;
+  var g=ctx.createLinearGradient(0,0,w,h);
+  g.addColorStop(0,pal[0]);g.addColorStop(.5,pal[1]);g.addColorStop(1,pal[2]);
+  ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  for(var i=0;i<8;i++){
+    var x=(w*(i*.12+.05+Math.sin(t*.3+i)*.04))%w;
+    var y=(h*(i*.11+.07+Math.cos(t*.22+i)*.04))%h;
+    var r=(w*.08+i*12)*(.5+Math.sin(t*.4+i)*.5);
+    var cg=ctx.createRadialGradient(x,y,0,x,y,r);
+    cg.addColorStop(0,pal[3]+'55');cg.addColorStop(1,'transparent');
+    ctx.fillStyle=cg;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.fillStyle='rgba(0,0,0,.08)';
+  for(var row=0;row<h;row+=3)ctx.fillRect(0,row,w,1);
+}
+
+// ── SAVE / LOAD ──
+function save(){
+  try{
+    var slim=clips.map(function(c){return Object.assign({},c,{videoUrl:null,lipUrl:null});});
+    localStorage.setItem('sx6_clips',JSON.stringify(slim));
+    var hk=$id('hf-inp').value.trim()||$id('hf-dir').value.trim();
+    var ek=$id('el-key').value.trim();
+    if(hk)localStorage.setItem('sx6_hf',hk);
+    if(ek)localStorage.setItem('sx6_el',ek);
+  }catch(e){}
+}
+function loadSaved(){
+  try{
+    var c=localStorage.getItem('sx6_clips');
+    if(c){
+      clips=JSON.parse(c);
+      clips.forEach(function(cl){
+        if(cl.status==='generating')cl.status='error';
+      });
+    }
+    var hk=localStorage.getItem('sx6_hf')||'';
+    var ek=localStorage.getItem('sx6_el')||'';
+    if(hk){$id('hf-inp').value=hk;$id('hf-dir').value=hk;}
+    if(ek)$id('el-key').value=ek;
+  }catch(e){}
+}
+
+// ── HF KEY SYNC ──
+function onHFInput(){
+  var v=$id('hf-inp').value.trim()||$id('hf-dir').value.trim();
+  $id('hf-inp').value=v;$id('hf-dir').value=v;
+  var ok=v.startsWith('hf_')&&v.length>10;
+  if(ok)localStorage.setItem('sx6_hf',v);
+  $id('hf-banner').classList.toggle('ok',ok);
+  $id('hf-banner-title').textContent=ok?'✅ HuggingFace Connected — Real AI video enabled!':'🤗 Connect HuggingFace to generate real AI videos';
+  $id('hf-stat-s').textContent=ok?'✅ Connected':'Not connected';
+  $id('hf-stat-s').style.color=ok?'var(--green)':'var(--mut)';
+  $id('hf-dot').className='sdot'+(ok?' ok':'');
+  $id('hf-stat-d').textContent=ok?'Ready ✓':'Paste token for video';
+  save();
+}
+function onELInput(){
+  var v=$id('el-key').value.trim();
+  var ok=v.length>8;
+  if(ok)localStorage.setItem('sx6_el',v);
+  $id('el-dot').className='sdot'+(ok?' ok':'');
+  $id('el-stat').textContent=ok?'Ready ✓':'Paste key';
+  save();
+}
+
+// ── STYLE UI ──
+function updateStyleUI(){
+  $id('style-lbl').textContent=STYLES[si];
+  $id('dp-style').textContent=STYLES[si];
+  $id('dp-cam').textContent=CAMS[ci];
+  document.querySelectorAll('.stybtn').forEach(function(b){
+    b.classList.toggle('on',b.dataset.s===STYLES[si]);
+  });
+}
+function buildStyleList(){
+  var g=$id('style-list');g.innerHTML='';
+  STYLES.forEach(function(s,i){
+    var b=document.createElement('button');
+    b.className='stybtn'+(i===0?' on':'');
+    b.dataset.s=s;
+    b.innerHTML='<span class="stydot"></span>'+s;
+    b.onclick=function(){si=i;updateStyleUI();save();};
+    g.appendChild(b);
+  });
+}
+function buildVoiceSel(){
+  var g=$id('voice-sel');g.innerHTML='';
+  VOICES.forEach(function(v){
+    var d=document.createElement('div');
+    d.className='vopt'+(v.id===activeVoiceId?' on':'');
+    d.innerHTML='<div class="vopt-name">'+v.name+'</div><div class="vopt-style">'+v.style+'</div>';
+    d.onclick=function(){
+      document.querySelectorAll('.vopt').forEach(function(x){x.classList.remove('on');});
+      d.classList.add('on');activeVoiceId=v.id;
+    };
+    g.appendChild(d);
+  });
+}
+
+// ── RENDER GRIDS ──
+function renderGrids(){
+  var count=clips.length;
+  $id('clip-count').textContent=count+' clip'+(count!==1?'s':'');
+  ['simple-grid','dir-grid'].forEach(function(gid){
+    var g=$id(gid);if(!g)return;
+    g.innerHTML='';
+    if(!count){
+      g.innerHTML='<div class="empty"><div class="empty-icon">🎬</div><h3>Nothing yet</h3><p>Write a prompt and hit Generate</p></div>';
+      return;
+    }
+    clips.forEach(function(c){
+      var card=buildCard(c);
+      g.appendChild(card);
+      var cv=card.querySelector('canvas.thcv');
+      if(cv)drawCanvas(cv,c.palette,0);
+    });
+  });
+}
+
+function buildCard(c){
+  var isDone=c.status==='done';
+  var isGen=c.status==='generating';
+  var el=document.createElement('div');
+  el.className='vcard'+(isDone?' clickable':'')+(c.extendedFrom?' ext':'');
+  el.dataset.id=c.id;
+
+  var badgeCls={generating:'gen',done:'done',error:'err'}[c.status]||'gen';
+  var badgeTxt=isGen?('<span class="spin"></span> '+(c.statusLabel||'Rendering…')):
+               (c.status==='done'?'Done ✓':(c.statusLabel||'Error'));
+
+  var extBadge=c.depth>0?'<div class="extbadge">↪ +'+c.depth+'</div>':'';
+  var lipBadge=c.hasLip?'<div class="lipbadge">💋 Synced</div>':'';
+  var prog=isGen?'<div class="vprog"><div class="vprog-fill"></div></div>':'';
+  var shim=isGen?'<div class="vshim"></div>':'';
+
+  var hasvid=!!(c.videoUrl||c.videoDataUrl);
+  var vidtag=hasvid&&isDone?'<video src="'+(c.videoUrl||c.videoDataUrl)+'" autoplay loop muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>':'';
+
+  el.innerHTML=
+    '<div class="vthumb">'+
+      '<canvas class="thcv" width="270" height="152"></canvas>'+
+      vidtag+shim+
+      '<div class="vbadge '+badgeCls+'">'+badgeTxt+'</div>'+
+      extBadge+lipBadge+prog+
+    '</div>'+
+    '<div class="vinfo">'+
+      '<div class="vprompt">'+escH(c.prompt)+'</div>'+
+      '<div class="vmeta">'+
+        '<div class="vtags">'+
+          '<span class="vtag">'+escH(c.settings.dur||'30s')+'</span>'+
+          '<span class="vtag tg">'+escH(c.settings.style)+'</span>'+
+          (hasvid?'<span class="vtag tc">📹 Video</span>':'')+
+        '</div>'+
+        '<div class="vacts">'+
+          '<button class="vact'+(c.favorite?' gold':'')+'">♥</button>'+
+          '<button class="vact">⬇</button>'+
+          (c.status==='error'?'<button class="vact">🔄</button>':'')+
+          '<button class="vact">🗑</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    (isDone?'<div class="vfoot"><button class="vfbtn ext">↪ Extend +30s</button><button class="vfbtn ls">💋 Lip Sync</button></div>':'');
+
+  // Events
+  var acts=el.querySelectorAll('.vact');
+  var actIdx=0;
+  // Fav
+  acts[actIdx++].onclick=function(e){e.stopPropagation();toggleFav(c.id);};
+  // Download
+  acts[actIdx++].onclick=function(e){e.stopPropagation();dlClip(c);};
+  // Retry (if error)
+  if(c.status==='error'){
+    acts[actIdx++].onclick=function(e){e.stopPropagation();retryClip(c.id);};
+  }
+  // Delete
+  acts[actIdx++].onclick=function(e){e.stopPropagation();deleteClip(c.id);};
+
+  if(isDone){
+    var ftBtns=el.querySelectorAll('.vfbtn');
+    ftBtns[0].onclick=function(e){e.stopPropagation();extendClip(c.id);};
+    ftBtns[1].onclick=function(e){e.stopPropagation();lsClipId=c.id;$id('ls-bg').style.display='flex';};
+    el.onclick=function(){openPreview(c);};
+  }
+  return el;
+}
+
+// ── CLIP ACTIONS ──
+function toggleFav(id){
+  var c=clips.find(function(x){return x.id===id;});
+  if(c){c.favorite=!c.favorite;renderGrids();save();}
+}
+function deleteClip(id){
+  clips=clips.filter(function(x){return x.id!==id;});
+  renderGrids();save();
+}
+function dlClip(c){
+  var url=c.lipUrl||c.videoDataUrl||c.videoUrl;
+  if(!url){toast('No video yet — generate first');return;}
+  var a=document.createElement('a');a.href=url;a.download='StudioX_'+c.id+'.mp4';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('⬇️ Downloading…');
+}
+function retryClip(id){
+  var c=clips.find(function(x){return x.id===id;});if(!c)return;
+  c.status='generating';c.statusLabel='Rendering…';renderGrids();
+  var hk=getHF();if(hk)runHF(c,hk);
+}
+function extendClip(id){
+  var c=clips.find(function(x){return x.id===id;});if(!c)return;
+  var prompt=c.prompt+', continuing the scene';
+  makeClip(prompt,{dur:c.settings.dur,ratio:c.settings.ratio||'16:9',qual:c.settings.qual||'1080p',model:c.settings.model||'damo-vilab/text-to-video-ms-1.7b',style:c.settings.style,camera:c.settings.camera},id);
+  $id('prev-bg').style.display='none';
+}
+
+// ── GENERATE ──
+function simpleGenerate(){
+  var prompt=$id('simple-ta').value.trim();
+  if(!prompt){toast('Describe your scene first');$id('simple-ta').focus();return;}
+  makeClip(prompt,{
+    dur:$id('q-dur').value,ratio:$id('q-ratio').value,qual:$id('q-qual').value,
+    model:'damo-vilab/text-to-video-ms-1.7b',style:STYLES[si],camera:CAMS[ci]
+  },null);
+  $id('simple-ta').value='';$id('simple-ta').style.height='auto';
+}
+function dirGenerate(){
+  var prompt=$id('dir-ta').value.trim();
+  if(!prompt){toast('Enter a scene description');$id('dir-ta').focus();return;}
+  makeClip(prompt,{
+    dur:$id('d-dur').value,ratio:$id('d-ratio').value,qual:$id('d-qual').value,
+    model:$id('d-model').value,style:STYLES[si],camera:CAMS[ci]
+  },null);
+  $id('dir-ta').value='';
+}
+function makeClip(prompt,settings,extFrom){
+  var parent=extFrom?clips.find(function(c){return c.id===extFrom;}):null;
+  var id=Date.now();
+  var clip={
+    id:id,prompt:prompt,
+    settings:parent?Object.assign({},settings,{style:parent.settings.style,camera:parent.settings.camera}):settings,
+    palette:parent?parent.palette:rndPal(),
+    chainId:parent?(parent.chainId||parent.id):id,
+    depth:parent?((parent.depth||0)+1):0,
+    extendedFrom:extFrom||null,
+    status:'generating',statusLabel:'Rendering…',
+    favorite:false,videoUrl:null,videoDataUrl:null,lipUrl:null,hasLip:false,
+    created:new Date().toISOString()
+  };
+  clips.unshift(clip);
+  renderGrids();save();
+  toast('Generating '+clip.settings.style+' clip…');
+  var hk=getHF();
+  if(hk&&hk.startsWith('hf_')&&hk.length>10){
+    runHF(clip,hk);
+  } else {
+    toast('⚠️ Paste your HuggingFace token in the blue box above');
+    setTimeout(function(){
+      var i=clips.findIndex(function(c){return c.id===id;});
+      if(i!==-1){clips[i].status='error';clips[i].statusLabel='No HF token';}
+      renderGrids();
+    },2000);
+  }
+}
+
+async function runHF(clip,token){
+  var id=clip.id;
+  var styleDesc=SDESC[clip.settings.style]||clip.settings.style;
+  var prompt=clip.prompt+', '+styleDesc+', '+(clip.settings.camera||'wide shot');
+  var mdl=clip.settings.model||'damo-vilab/text-to-video-ms-1.7b';
+  var ep='https://api-inference.huggingface.co/models/'+mdl;
+
+  function setLabel(txt){
+    var c=clips.find(function(x){return x.id===id;});
+    if(c)c.statusLabel=txt;
+    document.querySelectorAll('[data-id="'+id+'"] .vbadge').forEach(function(b){
+      b.innerHTML='<span class="spin"></span> '+txt;
+    });
+  }
+
+  for(var attempt=1;attempt<=8;attempt++){
+    try{
+      setLabel(attempt>1?'Retry '+attempt+'/8…':'Rendering…');
+      var body={inputs:prompt,parameters:{num_inference_steps:20,num_frames:16,guidance_scale:7.5}};
+      var res=await fetch(ep,{
+        method:'POST',
+        headers:{Authorization:'Bearer '+token,'Content-Type':'application/json','x-use-cache':'false'},
+        body:JSON.stringify(body)
+      });
+      if(res.status===503){
+        var wait=35;
+        try{var j=await res.json();if(j.estimated_time)wait=Math.ceil(j.estimated_time)+5;}catch(e){}
+        wait=Math.min(wait,90);
+        setLabel('Loading model — '+wait+'s…');
+        toast('🤗 Model loading, waiting '+wait+'s (attempt '+attempt+')');
+        await sleep(wait*1000);continue;
+      }
+      if(res.status===401){
+        var c2=clips.find(function(x){return x.id===id;});
+        if(c2){c2.status='error';c2.statusLabel='Invalid token';}
+        renderGrids();toast('❌ Invalid HuggingFace token — check and re-paste it');return;
+      }
+      if(res.status===429){setLabel('Rate limited…');await sleep(40000);continue;}
+      if(!res.ok){
+        var et=await res.text().catch(function(){return'';});
+        if(et.includes('loading')){await sleep(28000);continue;}
+        throw new Error('HF '+res.status+(et?' — '+et.slice(0,80):''));
+      }
+      var blob=await res.blob();
+      if(blob.size<600){
+        try{
+          var t2=await blob.text();var j2=JSON.parse(t2);
+          if(j2.error){if(j2.error.includes('loading')){await sleep(25000);continue;}throw new Error(j2.error);}
+        }catch(e){if(e.message&&!e.message.includes('JSON'))throw e;}
+      }
+      // Success
+      var videoUrl=URL.createObjectURL(blob);
+      var c3=clips.find(function(x){return x.id===id;});
+      if(c3){c3.status='done';c3.statusLabel='Done';c3.videoUrl=videoUrl;}
+      renderGrids();save();
+      toast('✅ Video ready! Tap to play & download');
+      // Also store as data URL for persistent download
+      var fr=new FileReader();
+      fr.onload=function(ev){
+        var c4=clips.find(function(x){return x.id===id;});
+        if(c4)c4.videoDataUrl=ev.target.result;
+        save();
+      };
+      fr.readAsDataURL(blob);
+      return;
+    }catch(err){
+      var isNet=err.message&&(err.message.includes('fetch')||err.message.includes('Failed to fetch')||err.message.includes('NetworkError'));
+      if(isNet){
+        var c5=clips.find(function(x){return x.id===id;});
+        if(c5){c5.status='error';c5.statusLabel='Blocked';}
+        renderGrids();$id('net-bg').style.display='flex';return;
+      }
+      if(attempt>=8){
+        var c6=clips.find(function(x){return x.id===id;});
+        if(c6){c6.status='error';c6.statusLabel='Failed — retry';}
+        renderGrids();toast('Failed: '+err.message.slice(0,50));return;
+      }
+      setLabel('Error — retrying…');await sleep(8000);
+    }
+  }
+  var cf=clips.find(function(x){return x.id===id;});
+  if(cf){cf.status='error';cf.statusLabel='Failed — retry';}
+  renderGrids();
+}
+
+// ── VOICE ──
+async function synthesize(){
+  var text=$id('voice-ta').value.trim();
+  if(!text){toast('Enter text to synthesize');return;}
+  var key=getEL();if(!key){toast('Add your ElevenLabs key in the left panel');return;}
+  var btn=$id('synth-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Synthesizing…';
+  try{
+    var res=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+activeVoiceId,{
+      method:'POST',
+      headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify({text:text,model_id:'eleven_monolingual_v1',voice_settings:{stability:.5,similarity_boost:.75}})
+    });
+    if(!res.ok)throw new Error('ElevenLabs '+res.status);
+    var blob=await res.blob();
+    var url=URL.createObjectURL(blob);
+    $id('voice-audio').src=url;
+    $id('voice-out').style.display='block';
+    toast('Voice ready ✓ — '+VOICES.find(function(v){return v.id===activeVoiceId;}).name);
+  }catch(e){toast('Voice error: '+e.message);}
+  btn.disabled=false;btn.innerHTML='⚡ Synthesize Voice';
+}
+
+async function runLS(){
+  var text=$id('ls-ta').value.trim();
+  var elKey=getEL();var hfKey=getHF();
+  var stat=$id('ls-status');
+  if(!text){toast('Enter dialogue first');return;}
+  if(!elKey){toast('Add your ElevenLabs key in Director Mode first');return;}
+  var btn=$id('ls-run');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Processing…';stat.textContent='';
+  try{
+    stat.textContent='Synthesizing voice…';
+    var vr=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+$id('ls-voice').value,{
+      method:'POST',headers:{'xi-api-key':elKey,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify({text:text,model_id:'eleven_monolingual_v1',voice_settings:{stability:.5,similarity_boost:.75}})
+    });
+    if(!vr.ok)throw new Error('ElevenLabs '+vr.status);
+    var blob=await vr.blob();
+    if(hfKey&&hfKey.startsWith('hf_')){
+      stat.textContent='Applying lip sync…';
+      var fd=new FormData();fd.append('file',blob,'voice.mp3');
+      var lr=await fetch('https://api-inference.huggingface.co/models/numz/wav2lip_studio',{
+        method:'POST',headers:{Authorization:'Bearer '+hfKey},body:fd
+      });
+      if(lr.ok){
+        var lb=await lr.blob();var lu=URL.createObjectURL(lb);
+        if(lsClipId){var c=clips.find(function(x){return x.id===lsClipId;});if(c){c.lipUrl=lu;c.hasLip=true;}renderGrids();save();}
+        stat.textContent='✅ Lip sync done!';toast('Lip sync applied ✓');
+      } else {stat.textContent='Voice done! Lip sync unavailable right now.';}
+    } else {stat.textContent='✅ Voice ready! (Add HF token for lip sync video)';}
+  }catch(e){stat.style.color='var(--red)';stat.textContent='Error: '+e.message;}
+  btn.disabled=false;btn.innerHTML='⚡ Generate Lip Sync';
+}
+
+// ── PREVIEW ──
+function openPreview(c){
+  prevClipId=c.id;
+  if(prevAF){cancelAnimationFrame(prevAF);prevAF=null;}
+  $id('prev-prompt').textContent=c.prompt;
+  var mv=document.querySelector('.mthumb');
+  mv.querySelectorAll('video').forEach(function(v){v.remove();});
+  var url=c.lipUrl||c.videoUrl||c.videoDataUrl;
+  if(url){
+    var vid=document.createElement('video');
+    vid.src=url;vid.controls=true;vid.autoplay=true;vid.loop=true;vid.playsInline=true;
+    vid.muted=!c.lipUrl;
+    vid.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+    mv.appendChild(vid);
+  }
+  var cv=$id('prev-canvas');var t=0;
+  (function anim(){drawCanvas(cv,c.palette,t+=.02);prevAF=requestAnimationFrame(anim);})();
+  $id('prev-bg').style.display='flex';
+}
+function closePreview(){
+  $id('prev-bg').style.display='none';
+  if(prevAF){cancelAnimationFrame(prevAF);prevAF=null;}
+  document.querySelector('.mthumb').querySelectorAll('video').forEach(function(v){v.remove();});
+}
+
+// ── LOCK ──
+function tryUnlock(){
+  if($id('lk-inp').value===CODE){
+    $id('lock').style.display='none';
+    $id('app').classList.add('on');
+    loadSaved();buildStyleList();buildVoiceSel();updateStyleUI();onHFInput();onELInput();renderGrids();
+    toast('Welcome to StudioX ✦');
+  } else {
+    $id('lk-err').textContent='Incorrect code — try again';
+    $id('lk-inp').value='';
+    setTimeout(function(){$id('lk-err').textContent='';},3000);
+  }
+}
+
+// ── WIRE UP ──
+$id('lk-btn').onclick=tryUnlock;
+$id('lk-inp').onkeydown=function(e){if(e.key==='Enter')tryUnlock();};
+$id('lock-btn').onclick=function(){
+  $id('app').classList.remove('on');
+  $id('lock').style.display='flex';
+  $id('lk-inp').value='';$id('lk-inp').focus();
+};
+$id('export-btn').onclick=function(){
+  var b=new Blob([JSON.stringify({clips:clips.map(function(c){return{id:c.id,prompt:c.prompt,style:c.settings.style,created:c.created};})},null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='StudioX_export.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);toast('Exported ✓');
+};
+
+// Mode switch
+$id('msw-s').onclick=function(){
+  $id('msw-s').classList.add('on');$id('msw-d').classList.remove('on');
+  $id('simple').classList.add('on');$id('director').classList.remove('on');
+};
+$id('msw-d').onclick=function(){
+  $id('msw-d').classList.add('on');$id('msw-s').classList.remove('on');
+  $id('director').classList.add('on');$id('simple').classList.remove('on');
+};
+
+// Simple generate
+$id('simple-gen').onclick=simpleGenerate;
+$id('simple-ta').onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();simpleGenerate();}};
+$id('simple-ta').oninput=function(){this.style.height='auto';this.style.height=this.scrollHeight+'px';};
+
+// Ideas
+document.querySelectorAll('.idea').forEach(function(b){
+  b.onclick=function(){$id('simple-ta').value=this.dataset.p;$id('simple-ta').dispatchEvent(new Event('input'));$id('simple-ta').focus();};
+});
+
+// Style pill
+$id('style-pill').onclick=function(){si=(si+1)%STYLES.length;updateStyleUI();save();toast('Style: '+STYLES[si]);};
+
+// Director
+$id('dir-gen').onclick=dirGenerate;
+$id('dir-ta').onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();dirGenerate();}};
+$id('dp-style').onclick=function(){si=(si+1)%STYLES.length;updateStyleUI();save();};
+$id('dp-cam').onclick=function(){ci=(ci+1)%CAMS.length;updateStyleUI();save();};
+
+// HF / EL inputs
+$id('hf-inp').oninput=onHFInput;
+$id('hf-dir').oninput=onHFInput;
+$id('el-key').oninput=onELInput;
+
+// Voice
+$id('synth-btn').onclick=synthesize;
+
+// Preview modal
+$id('prev-bg').onclick=function(e){if(e.target===this)closePreview();};
+$id('prev-close').onclick=closePreview;
+$id('prev-dl').onclick=function(){
+  var c=clips.find(function(x){return x.id===prevClipId;});if(c)dlClip(c);
+};
+$id('prev-extend').onclick=function(){
+  if(prevClipId)extendClip(prevClipId);
+};
+
+// LS modal
+$id('ls-close').onclick=function(){$id('ls-bg').style.display='none';$id('ls-status').textContent='';};
+$id('ls-bg').onclick=function(e){if(e.target===this){$id('ls-bg').style.display='none';$id('ls-status').textContent='';}};
+$id('ls-run').onclick=runLS;
+
+// Net help modal
+$id('net-close').onclick=function(){$id('net-bg').style.display='none';};
+$id('net-close2').onclick=function(){$id('net-bg').style.display='none';};
+$id('net-bg').onclick=function(e){if(e.target===this)$id('net-bg').style.display='none';};
+
+// Focus lock on load
+$id('lk-inp').focus();
+</script>
+</body>
+</html>
